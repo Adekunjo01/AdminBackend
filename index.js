@@ -5,7 +5,7 @@ const cors = require("cors");
 const AdminModel = require('../Server/Models/Admin');
 
 const app = express();
-
+const PORT = process.env.PORT || 3001; // Default to 3001 if PORT is not set
 // Middlewares
 app.use(cors()); // Enable CORS for all origins (can specify in production)
 app.use(express.json()); // Enable JSON parsing for incoming requests
@@ -46,6 +46,6 @@ app.post('/login', (req, res) => {
   });
   
 // Start Server
-app.listen(3001, () => {
-    console.log("Server is Running on port 3001");
+app.listen(PORT, () => {
+  console.log(`Server is Running on port ${PORT}`);
 });
