@@ -1,50 +1,68 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require("cors");
+const cors = require('cors');
+const bcrypt = require('bcrypt');
 const AdminModel = require('../Server/Models/Admin');
 
 const app = express();
-const PORT = process.env.PORT || 3001; // Default to 3001 if PORT is not set
-// Middlewares
-app.use(cors()); // Enable CORS for all origins (can specify in production)
-app.use(express.json()); // Enable JSON parsing for incoming requests
+const PORT = process.env.PORT || 3001;
 
-// Database Connection
-mongoose.connect(process.env.MONGO_CONNECTION_STRING)
-    .then(() => {
-        console.log("Mongoose connected");
-    })
-    .catch((err) => {
-        console.error("Error connecting to MongoDB", err);
+app.use(cors());
+app.use(express.json()); // Add this to parse JSON
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_CONNECTION_STRING, {
+  
+})
+.then(() => console.log('Mongoose connected'))
+.catch(err => console.error('Error connecting to MongoDB', err));
+
+// Register route
+app.post('/register', async (req, res) => {
+  try {
+    console.log(req.body); // Log the incoming data for debugging
+    const { email, password, name, number } = req.body;
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const newAdmin = new AdminModel({
+      email,
+      password: hashedPassword,
+      name,
+      number
     });
 
-// Routes
-app.post('/register', (req, res) => {
-    AdminModel.create(req.body) 
-        .then(admins => res.json(admins))
-        .catch(err => res.status(500).json({ error: err.message })); // Improved error handling
+    const savedAdmin = await newAdmin.save();
+    res.json(savedAdmin);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/login', (req, res) => {
-    const { email, password } = req.body;
-    AdminModel.findOne({ email: email })
-      .then(user => {
-        if (user) {
-          if (user.password === password) {
-            res.status(200).json({ message: "Success" }); // login successful
-          } else {
-            res.status(401).json({ message: "Incorrect Password" }); // wrong password
-          }
-        } else {
-          res.status(404).json({ message: "No record found, please create an account" }); // no user found
-        }
-      })
-      .catch(err => {
-        res.status(500).json({ message: "Server Error", error: err });
-      });
-  });
-  
+// Login route
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await AdminModel.findOne({ email: email });
+
+    if (user) {
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (passwordMatch) {
+        res.status(200).json({ message: "Success" });
+      } else {
+        res.status(401).json({ message: "Incorrect Password" });
+      }
+    } else {
+      res.status(404).json({ message: "No record found, please create an account" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is Running on port ${PORT}`);
