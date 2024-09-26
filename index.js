@@ -9,19 +9,19 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json()); // Add this to parse JSON
+app.use(express.json());
 
-// Connect to MongoDB
+
 mongoose.connect(process.env.MONGO_CONNECTION_STRING, {
   
 })
 .then(() => console.log('Mongoose connected'))
 .catch(err => console.error('Error connecting to MongoDB', err));
 
-// Register route
+
 app.post('/register', async (req, res) => {
   try {
-    console.log(req.body); // Log the incoming data for debugging
+    console.log(req.body); 
     const { email, password, name, number } = req.body;
 
     const saltRounds = 10;
@@ -41,7 +41,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Login route
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -63,7 +63,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Start Server
+
 app.listen(PORT, () => {
   console.log(`Server is Running on port ${PORT}`);
 });
